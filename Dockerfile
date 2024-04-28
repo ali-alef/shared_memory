@@ -7,7 +7,7 @@ WORKDIR /app
 
 COPY . /app
 
-RUN gcc -shared -fPIC -o ./shared/shared.so ./shared/main.c
+RUN gcc -shared -fPIC -o ./shared/shared.so ./shared/shared_memory.c
 
 RUN pip install -r ./python_service/requirements.txt
 
