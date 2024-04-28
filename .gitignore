@@ -4,6 +4,9 @@ js/node_modules
 
 shared/CMakeLists.txt
 shared/cmake-build-debug
-shared_memory/*.so
+shared/*.so
+
+malek_taj/CMakeLists.txt
+malek_taj/cmake-build-debug
 
 */__pycache__
