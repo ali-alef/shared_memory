@@ -1,44 +1,50 @@
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <string>
+#include <unordered_map>
+#include "utils.f"
 
-#define MAX_LINE_LENGTH 100
-
-char *DLL_PATH;
+std::unordered_map<std::string, std::string> ENV_MAP;
 
 void read_env() {
-    // get env variable from os
-    char *environment = getenv("ENV");
+    // Get env variable from os
+    const char* env = getenv("ENV");
 
-    // if it is null set it to default variable (local)
-    if (environment == NULL) {
-        printf("ENV environment variable is not set setting it to default (LOCAL)\n");
-        environment = "local";
+    // If it is null set it to default variable (local)
+    std::string environment = (env != nullptr) ? std::string(env) : "LOCAL";
+
+    // Lower env variable
+    environment = toLower(environment);
+
+    // Define a buffer to hold the formatted string
+    std::string env_file_path = "../config/" + environment + ".env";
+
+    std::ifstream env_file;
+    env_file.open(env_file_path);
+
+    // Check if the file opened successfully
+    if (!env_file.is_open()) {
+        throw std::runtime_error("Failed to open env file!");
     }
-    // lower the environment if you could :)
-    char env_file_path[100]; // Define a buffer to hold the formatted string
-    sprintf(env_file_path, "%s.env", environment);
-    printf("inja -> %s\n", env_file_path);
 
-    FILE *env_file = fopen(env_file_path, "r");
-    if (!env_file) {
-        perror("Error opening .env file");
-        return;
-    }
-
-    char line[MAX_LINE_LENGTH];
-    while (fgets(line, sizeof(line), env_file)) {
-        char *key = strtok(line, "=");
-        char *value = strtok(NULL, "=");
-
-        if (value) {
-            value[strcspn(value, "\n")] = 0;
+    // Read the contents of the file
+    std::string line;
+    while (std::getline(env_file, line)) {
+        std::istringstream iss(line);
+        std::string key, value;
+        // Get each line and separate it by '=' and store data in a map
+        if (std::getline(iss, key, '=')) {
+            if (std::getline(iss, value)) {
+                ENV_MAP[key] = value;
+            } else {
+                std::cerr << "Invalid line in environment file: " << line << std::endl;
+            }
+        } else {
+            std::cerr << "Invalid line in environment file: " << line << std::endl;
         }
-
-        if (strcmp(key, "DLL_PATH") == 0) {
-            DLL_PATH = value;
-        }
     }
 
-    fclose(env_file);
+    // Close the file
+    env_file.close();
 }

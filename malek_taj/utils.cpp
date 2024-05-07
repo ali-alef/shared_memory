@@ -1,51 +1,60 @@
-#include <stdio.h>
+#include <iostream>
 #include <dlfcn.h>
-#include <ctype.h>
 #include "settings.f"
 
-#define MAX_LINE_LENGTH 100
+typedef int (*CreateSharedMemory)();
+typedef void (*CloseSharedMemory)(int shm_fd);
+typedef void (*WriteToSharedMemory)(int shm_fd, char* data);
+typedef char* (*ReadFromSharedMemory)(int shm_fd);
 
-typedef int (*CREATE_SHARED_MEMORY)();
-CREATE_SHARED_MEMORY create_shared_memory;
+CreateSharedMemory create_shared_memory;
+CloseSharedMemory close_shared_memory;
+WriteToSharedMemory write_to_shared_memory;
+ReadFromSharedMemory read_from_shared_memory;
 
-typedef void (*WRITE_TO_SHARED_MEMORY)(int shm_fd, char* data);
-WRITE_TO_SHARED_MEMORY write_to_shared_memory;
+std::string toLower(const std::string& str) {
+    std::string result;
+    for (char c : str) {
+        result += std::tolower(c);
+    }
+    return result;
+}
 
-typedef char* (*READ_FROM_SHARED_MEMORY)(int shm_fd);
-READ_FROM_SHARED_MEMORY read_from_shared_memory;
+void InitializeSharedObject() {
+    const char* dll_path = ENV_MAP["DLL_PATH"].c_str();
 
-int create_shared_memory_libs() {
-    void *lib_handle = dlopen(DLL_PATH, RTLD_LAZY);
-    if (!lib_handle) {
-        fprintf(stderr, "Error loading shared library: %s\n", dlerror());
-        return 1;
+    void* handle = dlopen(dll_path, RTLD_LAZY);
+    if (!handle) {
+        std::string err = dlerror();
+        throw std::runtime_error("Failed to load the shared object: " + err);
     }
 
-    create_shared_memory = (CREATE_SHARED_MEMORY)dlsym(lib_handle, "create_shared_memory");
-    const char *dlsym_error = dlerror();
-    if (dlsym_error) {
-        fprintf(stderr, "Error resolving symbol: %s\n", dlsym_error);
-        dlclose(lib_handle);
-        return 1;
+    // Get a function pointer to the function in the shared object
+    create_shared_memory = reinterpret_cast<CreateSharedMemory>(dlsym(handle, "create_shared_memory"));
+    if (!create_shared_memory) {
+        std::string err = dlerror();
+        dlclose(handle);
+        throw std::runtime_error("Failed to get function pointer: " + err);
     }
 
-    write_to_shared_memory = (WRITE_TO_SHARED_MEMORY)dlsym(lib_handle, "write_to_shared_memory");
-    dlsym_error = dlerror();
-    if (dlsym_error) {
-        fprintf(stderr, "Error resolving symbol: %s\n", dlsym_error);
-        dlclose(lib_handle);
-        return 1;
+    close_shared_memory = reinterpret_cast<CloseSharedMemory>(dlsym(handle, "close_shared_memory"));
+    if (!close_shared_memory) {
+        std::string err = dlerror();
+        dlclose(handle);
+        throw std::runtime_error("Failed to get function pointer: " + err);
     }
 
-    read_from_shared_memory = (READ_FROM_SHARED_MEMORY)dlsym(lib_handle, "read_from_shared_memory");
-    dlsym_error = dlerror();
-    if (dlsym_error) {
-        fprintf(stderr, "Error resolving symbol: %s\n", dlsym_error);
-        dlclose(lib_handle);
-        return 1;
+    write_to_shared_memory = reinterpret_cast<WriteToSharedMemory>(dlsym(handle, "write_to_shared_memory"));
+    if (!write_to_shared_memory) {
+        std::string err = dlerror();
+        dlclose(handle);
+        throw std::runtime_error("Failed to get function pointer: " + err);
     }
 
-    dlclose(lib_handle);
-
-    return 0;
+    read_from_shared_memory = reinterpret_cast<ReadFromSharedMemory>(dlsym(handle, "read_from_shared_memory"));
+    if (!read_from_shared_memory) {
+        std::string err = dlerror();
+        dlclose(handle);
+        throw std::runtime_error("Failed to get function pointer: " + err);
+    }
 }
