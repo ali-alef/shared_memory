@@ -43,10 +43,3 @@ char* read_from_shared_memory(int shm_fd) {
     munmap(ptr, SHM_SIZE);
     return data;
 }
-
-int main() {
-    int shm = create_shared_memory();
-    write_to_shared_memory(shm, "ali-alef");
-    char* data = read_from_shared_memory(shm);
-    printf("%s", data);
-}
