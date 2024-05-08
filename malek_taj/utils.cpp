@@ -12,7 +12,7 @@ CloseSharedMemory close_shared_memory;
 WriteToSharedMemory write_to_shared_memory;
 ReadFromSharedMemory read_from_shared_memory;
 
-std::string toLower(const std::string& str) {
+std::string ToLower(const std::string& str) {
     std::string result;
     for (char c : str) {
         result += std::tolower(c);

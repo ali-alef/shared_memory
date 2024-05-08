@@ -15,10 +15,10 @@ void read_env() {
     std::string environment = (env != nullptr) ? std::string(env) : "LOCAL";
 
     // Lower env variable
-    environment = toLower(environment);
+    environment = ToLower(environment);
 
     // Define a buffer to hold the formatted string
-    std::string env_file_path = "../config/" + environment + ".env";
+    std::string env_file_path = "./config/" + environment + ".env";
 
     std::ifstream env_file;
     env_file.open(env_file_path);
