@@ -12,7 +12,7 @@ extern CloseSharedMemory close_shared_memory;
 extern WriteToSharedMemory write_to_shared_memory;
 extern ReadFromSharedMemory read_from_shared_memory;
 
-extern std::string ToLower(const std::string& str);
-extern void InitializeSharedObject();
+extern std::string to_lower(const std::string& str);
+extern void initialize_shared_object();
 
 #endif

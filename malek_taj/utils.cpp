@@ -12,7 +12,7 @@ CloseSharedMemory close_shared_memory;
 WriteToSharedMemory write_to_shared_memory;
 ReadFromSharedMemory read_from_shared_memory;
 
-std::string ToLower(const std::string& str) {
+std::string to_lower(const std::string& str) {
     std::string result;
     for (char c : str) {
         result += std::tolower(c);
@@ -20,7 +20,7 @@ std::string ToLower(const std::string& str) {
     return result;
 }
 
-void InitializeSharedObject() {
+void initialize_shared_object() {
     const char* dll_path = ENV_MAP["DLL_PATH"].c_str();
 
     void* handle = dlopen(dll_path, RTLD_LAZY);
