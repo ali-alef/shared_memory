@@ -20,5 +20,5 @@ class SharedMemoryLock:
             print('noting is locked')
 
         self.req_socket.send_string(f"unlock:{self.lock_id}")
-        reply = self.req_socket.recv_string()
+        self.req_socket.recv_string()
         self.lock_id = None

@@ -1,5 +1,5 @@
-from utils import create_shared_memory, Bridge, init_subscriber_socket, init_push_socket, init_request_socket, \
-    SharedMemoryLock, write_to_shared_memory, read_from_shared_memory
+from utils import (create_shared_memory, Bridge, init_subscriber_socket,
+                   init_push_socket, init_request_socket, SharedMemoryLock)
 from typing import Tuple
 
 
@@ -12,12 +12,10 @@ shared_lock = SharedMemoryLock(req_socket)
 bridge = Bridge(shared_memory, sub_socket, shared_lock)
 
 
-@bridge.js(service_name="python-service")
+@bridge.decorate(service_name="python-service")
 async def hello(name: str, age: int) -> Tuple[str, int]: ...
 
 
 if __name__ == '__main__':
-    for i in range(10):
-        write_to_shared_memory(shared_memory, "", i)
     response = hello("ali", 21)
     print(response)

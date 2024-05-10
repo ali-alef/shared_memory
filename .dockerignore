@@ -6,6 +6,9 @@ shared/CMakeLists.txt
 shared/cmake-build-debug
 shared_memory/*.so
 
+malek_taj/cmake-build-debug
+malek_taj/build
+
 */__pycache__*
 
 */local.env

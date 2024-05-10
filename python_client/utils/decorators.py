@@ -63,7 +63,7 @@ class Bridge:
         self.subscriber = subscriber
         self.shared_lock = shared_lock
 
-    def js(self, service_name: str = None, *args, **kwargs):
+    def decorate(self, service_name: str = None, *args, **kwargs):
         def decorator(func):
             func = Function(
                 function_name=func.__name__,

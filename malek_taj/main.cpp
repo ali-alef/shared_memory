@@ -2,7 +2,6 @@
 #include <thread>
 #include <mutex>
 #include <chrono>
-#include <gtest/gtest.h>
 
 #include "json.hpp"
 #include "utils.f"
