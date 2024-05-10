@@ -9,8 +9,8 @@
 
 typedef int (*CreateSharedMemory)();
 typedef void (*CloseSharedMemory)(int shm_fd);
-typedef void (*WriteToSharedMemory)(int shm_fd, char* data);
-typedef char* (*ReadFromSharedMemory)(int shm_fd);
+typedef void (*WriteToSharedMemory)(int shm_fd, char* data, int index);
+typedef char* (*ReadFromSharedMemory)(int shm_fd, int index);
 
 CreateSharedMemory create_shared_memory;
 CloseSharedMemory close_shared_memory;

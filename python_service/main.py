@@ -25,13 +25,13 @@ if __name__ == '__main__':
         if operation != "request" or service_name != SERVICE_NAME:
             continue
 
-        shared_lock.get_lock()
-        data = json.loads(read_from_shared_memory(shared_memory))
+        index = shared_lock.get_lock()
+        data = json.loads(read_from_shared_memory(shared_memory, index))
         if not validate_request_dict(data):
             shared_lock.unlock()
             continue
 
-        write_to_shared_memory(shared_memory, "")
+        write_to_shared_memory(shared_memory, "", index)
         shared_lock.unlock()
 
         request_function = function_mapper.get(data.pop("function_name"), invalid_function)
@@ -42,5 +42,5 @@ if __name__ == '__main__':
 
         shared_lock.get_lock()
         print(data)
-        write_to_shared_memory(shared_memory, json.dumps(data))
+        write_to_shared_memory(shared_memory, json.dumps(data), index)
         shared_lock.unlock()

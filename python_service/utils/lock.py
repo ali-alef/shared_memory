@@ -12,8 +12,8 @@ class SharedMemoryLock:
         while True:
             self.req_socket.send_string(f"lock:{self.lock_id}")
             reply = self.req_socket.recv_string()
-            if reply == "200":
-                break
+            if reply.startswith("200"):
+                return reply.split(':')[1]
 
     def unlock(self):
         if not self.lock_id:

@@ -27,7 +27,7 @@ class Function:
     def __call__(self, *args: Any, **kwds: Any) -> Any:
         request_id = str(uuid.uuid4())
 
-        self.shared_lock.get_lock()
+        index = self.shared_lock.get_lock()
         write_to_shared_memory(
             self.shard_memory,
             json.dumps({
@@ -37,6 +37,7 @@ class Function:
                 "service_name": self.service_name,
                 "function_name": self.function_name,
             }),
+            index
         )
         self.shared_lock.unlock()
 
@@ -48,8 +49,8 @@ class Function:
                 break
 
         self.shared_lock.get_lock()
-        data = json.loads(read_from_shared_memory(self.shard_memory))
-        write_to_shared_memory(self.shard_memory, "")
+        data = json.loads(read_from_shared_memory(self.shard_memory, index))
+        write_to_shared_memory(self.shard_memory, "", index)
         self.shared_lock.unlock()
 
         return data["result"]

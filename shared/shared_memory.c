@@ -6,6 +6,7 @@
 #include <unistd.h>
 
 #define SHM_SIZE 1024
+#define NUM_MESSAGES 10
 
 int create_shared_memory() {
     int shm_fd = shm_open("/my_shared_memory", O_CREAT | O_RDWR, 0666);
@@ -22,24 +23,41 @@ void close_shared_memory(int shm_fd) {
     shm_unlink("/my_shared_memory");
 }
 
-void write_to_shared_memory(int shm_fd, char* data) {
-    void* ptr = mmap(0, SHM_SIZE, PROT_WRITE, MAP_SHARED, shm_fd, 0);
+void write_to_shared_memory(int shm_fd, char* data, int index) {
+    if (index >= NUM_MESSAGES || index < 0) {
+        printf("Invalid index\n");
+        return;
+    }
+
+    int offset = index * (SHM_SIZE / NUM_MESSAGES);
+    void* ptr = mmap(0, SHM_SIZE, PROT_WRITE, MAP_SHARED, shm_fd, offset);
     if (ptr == MAP_FAILED) {
         perror("mmap");
         exit(1);
     }
-    memcpy(ptr, data, strlen(data) + 1);
+
+    // Copy message to shared memory
+    strcpy((char*)ptr, data);
+
     munmap(ptr, SHM_SIZE);
 }
 
-char* read_from_shared_memory(int shm_fd) {
-    void* ptr = mmap(0, SHM_SIZE, PROT_READ, MAP_SHARED, shm_fd, 0);
+char* read_from_shared_memory(int shm_fd, int index) {
+    if (index >= NUM_MESSAGES || index < 0) {
+        printf("Invalid index\n");
+        return NULL;
+    }
+
+    int offset = index * (SHM_SIZE / NUM_MESSAGES);
+    void* ptr = mmap(0, SHM_SIZE, PROT_READ, MAP_SHARED, shm_fd, offset);
     if (ptr == MAP_FAILED) {
         perror("mmap");
         exit(1);
     }
-    char* data = (char*)malloc(SHM_SIZE);
+
+    char* data = (char*)malloc(SHM_SIZE / NUM_MESSAGES);
     strcpy(data, (char*)ptr);
+
     munmap(ptr, SHM_SIZE);
     return data;
 }

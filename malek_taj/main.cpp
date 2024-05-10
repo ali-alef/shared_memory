@@ -6,6 +6,7 @@
 #include "utils.f"
 #include "settings.f"
 
+#define NUM_MESSAGES 10
 
 using json = nlohmann::json;
 
@@ -47,12 +48,15 @@ void handle_shared_requests() {
     int shm = create_shared_memory();
     TimedSet request_set;
 
+    int index = 0;
     while (true) {
         lock();
-        std::string data = read_from_shared_memory(shm);
+        std::string data = read_from_shared_memory(shm, index);
 
         if(data.empty()) {
             unlock();
+            index++;
+            index %= NUM_MESSAGES;
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
             continue;
         }
@@ -77,12 +81,24 @@ void handle_shared_requests() {
     }
 }
 
+int first_empty_spot(int shm) {
+    for(int i = 0; i < NUM_MESSAGES; i++) {
+        std::string data = read_from_shared_memory(shm, i);
+        if(data.empty()) {
+            return i;
+        }
+    }
+    return -1;
+}
+
 void handle_shared_lock() {
     zmq::context_t context(1);
     zmq::socket_t socket(context, zmq::socket_type::rep);
     std::string response_route = "tcp://127.0.0.1:" + ENV_MAP["ZMQ_RESPONSE_PORT"];
     socket.bind(response_route);
     std::cout << "Response socket Running  on port: " << ENV_MAP["ZMQ_RESPONSE_PORT"] << std::endl;
+
+    int shm = create_shared_memory();
 
     while (true) {
         zmq::message_t lock_request;
@@ -105,8 +121,22 @@ void handle_shared_lock() {
         }
 
         lock();
-        zmq::message_t reply(3);
-        memcpy(reply.data(), OK, 3);
+        int index = first_empty_spot(shm);
+        if (index == -1) {
+            zmq::message_t reply(3);
+            memcpy(reply.data(), METHOD_NOT_ALLOWED, 3);
+            socket.send(reply, zmq::send_flags::none);
+            continue;
+        }
+
+        zmq::message_t reply(5);
+
+        char indexString[20];
+        char result[5];
+        sprintf(indexString, "%d", index);
+        strcpy(result, (const char *)OK);
+        strcat(result, indexString);
+        memcpy(reply.data(), result, 5);
         socket.send(reply, zmq::send_flags::none);
 
         while (true) {
@@ -147,10 +177,10 @@ int main() {
     read_env();
     initialize_shared_object();
 
-    std::thread shared_lock_thread(handle_shared_lock);
+//    std::thread shared_lock_thread(handle_shared_lock);
     std::thread shared_request_thread(handle_shared_requests);
 
-    shared_lock_thread.join();
+//    shared_lock_thread.join();
     shared_request_thread.join();
 
     return 0;

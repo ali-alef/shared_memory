@@ -17,6 +17,6 @@ async def hello(name: str, age: int) -> Tuple[str, int]: ...
 
 
 if __name__ == '__main__':
-    write_to_shared_memory(shared_memory, "")
+    write_to_shared_memory(shared_memory, "", 0)
     response = hello("ali", 21)
     print(response)
