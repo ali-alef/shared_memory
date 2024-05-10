@@ -6,6 +6,8 @@
 #include "utils.f"
 #include "settings.f"
 
+#define NUM_MESSAGES 10
+
 typedef int (*CreateSharedMemory)();
 typedef void (*CloseSharedMemory)(int shm_fd);
 typedef void (*WriteToSharedMemory)(int shm_fd, char* data, int index);
@@ -32,6 +34,16 @@ std::vector<std::string> split_string(const std::string& input, char delimiter) 
         tokens.push_back(token);
     }
     return tokens;
+}
+
+int first_empty_spot(int shm) {
+    for(int i = 0; i < NUM_MESSAGES; i++) {
+        std::string data = read_from_shared_memory(shm, i);
+        if(data.empty()) {
+            return i;
+        }
+    }
+    return -1;
 }
 
 void initialize_shared_object() {

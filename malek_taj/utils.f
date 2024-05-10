@@ -18,4 +18,6 @@ extern std::string to_lower(const std::string& str);
 extern std::vector<std::string> split_string(const std::string& input, char delimiter);
 extern void initialize_shared_object();
 
+extern int first_empty_spot(int shm);
+
 #endif

@@ -18,7 +18,7 @@ void read_env() {
     environment = to_lower(environment);
 
     // Define a buffer to hold the formatted string
-    std::string env_file_path = "..//config/" + environment + ".env";
+    std::string env_file_path = "../config/" + environment + ".env";
 
     std::ifstream env_file;
     env_file.open(env_file_path);

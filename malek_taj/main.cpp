@@ -29,14 +29,6 @@ const void *const IM_A_TEA_POT = "418";
 const void *const LOCKED = "423";
 const void *const SERVICE_UNAVAILABLE = "503";
 
-void lock() {
-    SHARED_MEMORY_LOCK.lock();
-}
-
-void unlock() {
-    SHARED_MEMORY_LOCK.unlock();
-}
-
 void handle_shared_requests() {
     // Initialize ZeroMQ context
     zmq::context_t context(1);
@@ -62,12 +54,12 @@ void handle_shared_requests() {
             times_loop_ran = 0;
         }
 
-        lock();
+        SHARED_MEMORY_LOCK.lock();
         std::string data = read_from_shared_memory(shm, index);
         index++;
 
         if(data.empty()) {
-            unlock();
+            SHARED_MEMORY_LOCK.unlock();
             index %= NUM_MESSAGES;
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
             continue;
@@ -81,25 +73,15 @@ void handle_shared_requests() {
         std::stringstream message;
         message << index << ":" << operation << ":" << service_name << ":" << uuid;
         if (request_set.contains(message.str())) {
-            unlock();
+            SHARED_MEMORY_LOCK.unlock();
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
             continue;
         }
         request_set.add(message.str(), std::chrono::seconds(2));
 
         publisher.send(zmq::buffer(message.str()), zmq::send_flags::none);
-        unlock();
+        SHARED_MEMORY_LOCK.unlock();
     }
-}
-
-int first_empty_spot(int shm) {
-    for(int i = 0; i < NUM_MESSAGES; i++) {
-        std::string data = read_from_shared_memory(shm, i);
-        if(data.empty()) {
-            return i;
-        }
-    }
-    return -1;
 }
 
 void handle_shared_lock() {
@@ -131,7 +113,7 @@ void handle_shared_lock() {
             continue;
         }
 
-        lock();
+        SHARED_MEMORY_LOCK.lock();
         int index = first_empty_spot(shm);
         if (index == -1) {
             zmq::message_t reply(3);
@@ -181,21 +163,19 @@ void handle_shared_lock() {
             socket.send(error_reply, zmq::send_flags::none);
             break;
         }
-        unlock();
+        SHARED_MEMORY_LOCK.unlock();
     }
 }
 
 int main(int argc, char** argv) {
-//    read_env();
-//    initialize_shared_object();
-//
-//    std::thread shared_lock_thread(handle_shared_lock);
-//    std::thread shared_request_thread(handle_shared_requests);
-//
-//    shared_lock_thread.join();
-//    shared_request_thread.join();
-//
-//    return 0;
-    ::testing::InitGoogleTest(&argc, argv);
-    return RUN_ALL_TESTS();
+    read_env();
+    initialize_shared_object();
+
+    std::thread shared_lock_thread(handle_shared_lock);
+    std::thread shared_request_thread(handle_shared_requests);
+
+    shared_lock_thread.join();
+    shared_request_thread.join();
+
+    return 0;
 }
