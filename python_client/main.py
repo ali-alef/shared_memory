@@ -1,5 +1,5 @@
 from utils import create_shared_memory, Bridge, init_subscriber_socket, init_push_socket, init_request_socket, \
-    SharedMemoryLock
+    SharedMemoryLock, write_to_shared_memory
 from typing import Tuple
 
 
@@ -17,5 +17,6 @@ async def hello(name: str, age: int) -> Tuple[str, int]: ...
 
 
 if __name__ == '__main__':
-    n, a = hello("ali", 21)
-    print(n, a)
+    write_to_shared_memory(shared_memory, "")
+    response = hello("ali", 21)
+    print(response)

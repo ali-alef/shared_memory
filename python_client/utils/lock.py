@@ -15,6 +15,8 @@ class SharedMemoryLock:
             if reply == "200":
                 break
 
+        print('locked')
+
     def unlock(self):
         if not self.lock_id:
             print('noting is locked')

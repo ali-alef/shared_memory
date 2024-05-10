@@ -1,6 +1,7 @@
 #include <zmq.hpp>
 #include <thread>
 #include <mutex>
+#include <set>
 
 #include "json.hpp"
 #include "utils.f"
@@ -15,25 +16,12 @@ const std::string REQUEST_OPERATION = "request";
 const std::string RESPONSE_OPERATION = "response";
 const std::string OK = "ok";
 
+void lock() {
+    SHARED_MEMORY_LOCK.lock();
+}
 
-std::string read_request_from_shm(int shm) {
-    while (true) {
-        SHARED_MEMORY_LOCK.lock();
-        std::string data = read_from_shared_memory(shm);
-        SHARED_MEMORY_LOCK.unlock();
-
-        if(data.empty()) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(1));
-            continue;
-        }
-        std::cout << "data -> " << data << std::endl;
-        json parsed_data = json::parse(data);
-        std::string service_name = parsed_data["service_name"];
-        std::string uuid = parsed_data["uuid"];
-        std::string operation = parsed_data["operation"];
-
-        return operation + ":" + service_name + ":" + uuid;
-    }
+void unlock() {
+    SHARED_MEMORY_LOCK.unlock();
 }
 
 void handle_shared_requests() {
@@ -46,40 +34,47 @@ void handle_shared_requests() {
     // Bind the socket to the address
     std::string publisher_route = "tcp://*:" + ENV_MAP["ZMQ_PUBLISHER_PORT"];
     publisher.bind(publisher_route);
-
-
-    // PAIR socket for receiving messages from a specific subscriber
-    zmq::socket_t pull_socket(context, zmq::socket_type::pull);
-    pull_socket.bind("tcp://*:5556"); // Bind to an address and port
+    std::cout << "Running publisher socket on: " << publisher_route << std::endl;
 
     int shm = create_shared_memory();
+    TimedSet request_set;
 
     while (true) {
-        std::string message = read_request_from_shm(shm);
-        publisher.send(zmq::buffer(message), zmq::send_flags::none);
-        std::cout << "publishing message -> " << message << std::endl;
+        lock();
+        std::string data = read_from_shared_memory(shm);
 
-        zmq::pollitem_t items[] = {{pull_socket, 0, ZMQ_POLLIN, 0}};
-        zmq::poll(&items[0], 1, 1000); // Timeout: 1000 milliseconds
-
-        if (items[0].revents & ZMQ_POLLIN) {
-            // Received message
-            zmq::message_t received_message;
-            pull_socket.recv(&received_message, 0);
-
-            // Convert the received message to a string
-            std::string received_str(static_cast<char*>(received_message.data()), received_message.size());
-        } else {
-            // No message received within 1 second
-            std::cout << "No message received within 1 second." << std::endl;
+        if(data.empty()) {
+            unlock();
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            continue;
         }
+
+
+        json parsed_data = json::parse(data);
+        std::string service_name = parsed_data["service_name"];
+        std::string uuid = parsed_data["uuid"];
+        std::string operation = parsed_data["operation"];
+        std::string message = operation + ":" + service_name + ":" + uuid;
+        if (request_set.contains(message)) {
+            unlock();
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            std::cout << "Removing expired data in set" << std::endl;
+            request_set.cleanupExpiredItems();
+            continue;
+        }
+        request_set.add(message, std::chrono::seconds(2));
+
+        publisher.send(zmq::buffer(message), zmq::send_flags::none);
+        unlock();
     }
 }
 
 void handle_shared_lock() {
     zmq::context_t context(1);
     zmq::socket_t socket(context, zmq::socket_type::rep);
-    socket.bind("tcp://127.0.0.1:5557");
+    std::string response_route = "tcp://127.0.0.1:" + ENV_MAP["ZMQ_RESPONSE_PORT"];
+    socket.bind(response_route);
+    std::cout << "Running response socket on: " << response_route << std::endl;
 
     while (true) {
         zmq::message_t lock_request;
@@ -101,7 +96,7 @@ void handle_shared_lock() {
             continue;
         }
 
-        SHARED_MEMORY_LOCK.lock();
+        lock();
         zmq::message_t reply(3);
         memcpy(reply.data(), "200", 3);
         socket.send(reply, zmq::send_flags::none);
@@ -136,8 +131,7 @@ void handle_shared_lock() {
             socket.send(error_reply, zmq::send_flags::none);
             break;
         }
-
-        SHARED_MEMORY_LOCK.unlock();
+        unlock();
     }
 }
 
@@ -145,7 +139,11 @@ int main() {
     read_env();
     initialize_shared_object();
 
-    std::thread t2(handle_shared_lock);
-    t2.join();
+    std::thread shared_lock_thread(handle_shared_lock);
+    std::thread shared_request_thread(handle_shared_requests);
+
+    shared_lock_thread.join();
+    shared_request_thread.join();
+
     return 0;
 }

@@ -2,7 +2,7 @@ from typing import Tuple
 
 
 def hello(name: str, age: int) -> Tuple[str, int]:
-    return "ali alef", 21
+    return name + " alef", 10 + age
 
 
 def invalid_function() -> str:

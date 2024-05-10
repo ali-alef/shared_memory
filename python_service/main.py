@@ -4,6 +4,7 @@ from methods import hello, invalid_function
 from utils import create_shared_memory, read_from_shared_memory, write_to_shared_memory, init_request_socket, \
     SharedMemoryLock
 from utils import init_subscriber_socket
+from utils.validator import validate_request_dict
 
 SERVICE_NAME = "python-service"
 
@@ -14,7 +15,6 @@ shared_memory = create_shared_memory()
 
 function_mapper = {
     "hello": hello,
-    None: invalid_function,
 }
 
 if __name__ == '__main__':
@@ -25,13 +25,19 @@ if __name__ == '__main__':
         if operation != "request" or service_name != SERVICE_NAME:
             print("none of my business!")
             continue
-
+        print('my business')
         shared_lock.get_lock()
         data = json.loads(read_from_shared_memory(shared_memory))
+        if not validate_request_dict(data):
+            shared_lock.unlock()
+            continue
+
         write_to_shared_memory(shared_memory, "")
         shared_lock.unlock()
+        print(data)
 
-        res = function_mapper[data.pop("function_name", "")](*data.pop("args", None))
+        request_function = function_mapper.get(data.pop("function_name"), invalid_function)
+        res = request_function(*data.pop("args", []))
 
         data["response"] = res
         data["operation"] = "response"
