@@ -20,3 +20,11 @@ def init_push_socket():
     push_socket.connect("tcp://localhost:5556")
 
     return push_socket
+
+
+def init_request_socket():
+    context = zmq.Context()
+    req_socket = context.socket(zmq.REQ)
+    req_socket.connect("tcp://127.0.0.1:5557")
+
+    return req_socket

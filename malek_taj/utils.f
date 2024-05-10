@@ -1,6 +1,7 @@
 #ifndef utils
 #define utils
 #include <iostream>
+#include <vector>
 
 typedef int (*CreateSharedMemory)();
 typedef void (*CloseSharedMemory)(int shm_fd);
@@ -13,6 +14,7 @@ extern WriteToSharedMemory write_to_shared_memory;
 extern ReadFromSharedMemory read_from_shared_memory;
 
 extern std::string to_lower(const std::string& str);
+extern std::vector<std::string> split_string(const std::string& input, char delimiter);
 extern void initialize_shared_object();
 
 #endif

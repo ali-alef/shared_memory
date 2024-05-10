@@ -1,11 +1,15 @@
-from utils import create_shared_memory, Bridge, init_subscriber_socket, init_push_socket
+from utils import create_shared_memory, Bridge, init_subscriber_socket, init_push_socket, init_request_socket, \
+    SharedMemoryLock
 from typing import Tuple
 
 
 push_socket = init_push_socket()
-subscriber_socket = init_subscriber_socket()
+sub_socket = init_subscriber_socket()
+req_socket = init_request_socket()
 shared_memory = create_shared_memory()
-bridge = Bridge(shared_memory, subscriber_socket)
+shared_lock = SharedMemoryLock(req_socket)
+
+bridge = Bridge(shared_memory, sub_socket, shared_lock)
 
 
 @bridge.js(service_name="python-service")

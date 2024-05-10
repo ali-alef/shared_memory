@@ -1,5 +1,8 @@
 #include <iostream>
 #include <dlfcn.h>
+#include <vector>
+#include <sstream>
+
 #include "settings.f"
 
 typedef int (*CreateSharedMemory)();
@@ -18,6 +21,16 @@ std::string to_lower(const std::string& str) {
         result += std::tolower(c);
     }
     return result;
+}
+
+std::vector<std::string> split_string(const std::string& input, char delimiter) {
+    std::vector<std::string> tokens;
+    std::istringstream stream(input);
+    std::string token;
+    while (std::getline(stream, token, delimiter)) {
+        tokens.push_back(token);
+    }
+    return tokens;
 }
 
 void initialize_shared_object() {
