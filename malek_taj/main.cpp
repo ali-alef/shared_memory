@@ -1,10 +1,13 @@
 #include <zmq.hpp>
 #include <thread>
 #include <mutex>
+#include <chrono>
+#include <gtest/gtest.h>
 
 #include "json.hpp"
 #include "utils.f"
 #include "settings.f"
+#include "timed_set.f"
 
 #define NUM_MESSAGES 10
 
@@ -24,6 +27,7 @@ const void *const FORBIDDEN = "403";
 const void *const METHOD_NOT_ALLOWED = "405";
 const void *const IM_A_TEA_POT = "418";
 const void *const LOCKED = "423";
+const void *const SERVICE_UNAVAILABLE = "503";
 
 void lock() {
     SHARED_MEMORY_LOCK.lock();
@@ -131,7 +135,7 @@ void handle_shared_lock() {
         int index = first_empty_spot(shm);
         if (index == -1) {
             zmq::message_t reply(3);
-            memcpy(reply.data(), METHOD_NOT_ALLOWED, 3);
+            memcpy(reply.data(), SERVICE_UNAVAILABLE, 3);
             socket.send(reply, zmq::send_flags::none);
             continue;
         }
@@ -181,15 +185,17 @@ void handle_shared_lock() {
     }
 }
 
-int main() {
-    read_env();
-    initialize_shared_object();
-
-    std::thread shared_lock_thread(handle_shared_lock);
-    std::thread shared_request_thread(handle_shared_requests);
-
-    shared_lock_thread.join();
-    shared_request_thread.join();
-
-    return 0;
+int main(int argc, char** argv) {
+//    read_env();
+//    initialize_shared_object();
+//
+//    std::thread shared_lock_thread(handle_shared_lock);
+//    std::thread shared_request_thread(handle_shared_requests);
+//
+//    shared_lock_thread.join();
+//    shared_request_thread.join();
+//
+//    return 0;
+    ::testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }

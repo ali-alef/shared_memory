@@ -1,5 +1,4 @@
 #include <iostream>
-#include <chrono>
 #include <dlfcn.h>
 #include <vector>
 #include <sstream>
@@ -16,27 +15,6 @@ CreateSharedMemory create_shared_memory;
 CloseSharedMemory close_shared_memory;
 WriteToSharedMemory write_to_shared_memory;
 ReadFromSharedMemory read_from_shared_memory;
-
-void TimedSet::add(const std::string& item, std::chrono::seconds duration) {
-    auto expiration_time = std::chrono::steady_clock::now() + duration;
-    items.emplace(expiration_time, item);
-}
-
-void TimedSet::cleanupExpiredItems() {
-    auto now = std::chrono::steady_clock::now();
-    while (!items.empty() && items.begin()->first < now) {
-        items.erase(items.begin());
-    }
-}
-
-bool TimedSet::contains(const std::string& item) const {
-    for (const auto& pair : items) {
-        if (pair.second == item) {
-            return true;
-        }
-    }
-    return false;
-}
 
 std::string to_lower(const std::string& str) {
     std::string result;

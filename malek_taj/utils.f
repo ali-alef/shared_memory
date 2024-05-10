@@ -1,19 +1,8 @@
 #ifndef utils
 #define utils
 #include <vector>
-#include <set>
-#include <chrono>
 #include <string>
 
-class TimedSet {
-public:
-    void add(const std::string& item, std::chrono::seconds duration);
-    void cleanupExpiredItems();
-    bool contains(const std::string& item) const;
-
-private:
-    std::set<std::pair<std::chrono::steady_clock::time_point, std::string>> items;
-};
 
 typedef int (*CreateSharedMemory)();
 typedef void (*CloseSharedMemory)(int shm_fd);
