@@ -49,13 +49,21 @@ void handle_shared_requests() {
     TimedSet request_set;
 
     int index = 0;
+    int times_loop_ran = 0;
     while (true) {
+        times_loop_ran++;
+        if(times_loop_ran == 20) {
+            std::cout << "Removing expired data in set" << std::endl;
+            request_set.cleanupExpiredItems();
+            times_loop_ran = 0;
+        }
+
         lock();
         std::string data = read_from_shared_memory(shm, index);
+        index++;
 
         if(data.empty()) {
             unlock();
-            index++;
             index %= NUM_MESSAGES;
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
             continue;
@@ -71,8 +79,6 @@ void handle_shared_requests() {
         if (request_set.contains(message.str())) {
             unlock();
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
-            std::cout << "Removing expired data in set" << std::endl;
-            request_set.cleanupExpiredItems();
             continue;
         }
         request_set.add(message.str(), std::chrono::seconds(2));
