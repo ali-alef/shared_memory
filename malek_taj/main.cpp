@@ -1,7 +1,6 @@
 #include <zmq.hpp>
 #include <thread>
 #include <mutex>
-#include <set>
 
 #include "json.hpp"
 #include "utils.f"
