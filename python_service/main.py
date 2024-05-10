@@ -23,9 +23,8 @@ if __name__ == '__main__':
         operation, service_name, id = message.split(":")
 
         if operation != "request" or service_name != SERVICE_NAME:
-            print("none of my business!")
             continue
-        print('my business')
+
         shared_lock.get_lock()
         data = json.loads(read_from_shared_memory(shared_memory))
         if not validate_request_dict(data):
@@ -34,14 +33,14 @@ if __name__ == '__main__':
 
         write_to_shared_memory(shared_memory, "")
         shared_lock.unlock()
-        print(data)
 
         request_function = function_mapper.get(data.pop("function_name"), invalid_function)
         res = request_function(*data.pop("args", []))
 
-        data["response"] = res
+        data["result"] = res
         data["operation"] = "response"
 
         shared_lock.get_lock()
+        print(data)
         write_to_shared_memory(shared_memory, json.dumps(data))
         shared_lock.unlock()

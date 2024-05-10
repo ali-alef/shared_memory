@@ -52,7 +52,7 @@ class Function:
         write_to_shared_memory(self.shard_memory, "")
         self.shared_lock.unlock()
 
-        return data["response"]
+        return data["result"]
 
 
 

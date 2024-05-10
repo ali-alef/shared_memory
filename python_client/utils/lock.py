@@ -15,13 +15,10 @@ class SharedMemoryLock:
             if reply == "200":
                 break
 
-        print('locked')
-
     def unlock(self):
         if not self.lock_id:
             print('noting is locked')
 
         self.req_socket.send_string(f"unlock:{self.lock_id}")
         reply = self.req_socket.recv_string()
-        print(f'got response for unlocking {reply}')
         self.lock_id = None

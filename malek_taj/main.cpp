@@ -13,7 +13,16 @@ std::mutex SHARED_MEMORY_LOCK;
 
 const std::string REQUEST_OPERATION = "request";
 const std::string RESPONSE_OPERATION = "response";
-const std::string OK = "ok";
+const std::string LOCK_REQUEST = "lock";
+const std::string UNLOCK_REQUEST = "unlock";
+
+const void *const OK = "200";
+
+const void *const BAD_REQUEST = "400";
+const void *const FORBIDDEN = "403";
+const void *const METHOD_NOT_ALLOWED = "405";
+const void *const IM_A_TEA_POT = "418";
+const void *const LOCKED = "423";
 
 void lock() {
     SHARED_MEMORY_LOCK.lock();
@@ -33,7 +42,7 @@ void handle_shared_requests() {
     // Bind the socket to the address
     std::string publisher_route = "tcp://*:" + ENV_MAP["ZMQ_PUBLISHER_PORT"];
     publisher.bind(publisher_route);
-    std::cout << "Running publisher socket on: " << publisher_route << std::endl;
+    std::cout << "Publisher Running on port: " << ENV_MAP["ZMQ_PUBLISHER_PORT"] << std::endl;
 
     int shm = create_shared_memory();
     TimedSet request_set;
@@ -73,7 +82,7 @@ void handle_shared_lock() {
     zmq::socket_t socket(context, zmq::socket_type::rep);
     std::string response_route = "tcp://127.0.0.1:" + ENV_MAP["ZMQ_RESPONSE_PORT"];
     socket.bind(response_route);
-    std::cout << "Running response socket on: " << response_route << std::endl;
+    std::cout << "Response socket Running  on port: " << ENV_MAP["ZMQ_RESPONSE_PORT"] << std::endl;
 
     while (true) {
         zmq::message_t lock_request;
@@ -81,23 +90,23 @@ void handle_shared_lock() {
         std::string lock_request_str(static_cast<char*>(lock_request.data()), lock_request.size());
         std::vector<std::string> tokens = split_string(lock_request_str, ':');
 
-        if(tokens[0] != "lock" && tokens[0] != "unlock") {
+        if(tokens[0] != LOCK_REQUEST && tokens[0] != UNLOCK_REQUEST) {
             zmq::message_t reply(3);
-            memcpy(reply.data(), "418", 3);
+            memcpy(reply.data(), IM_A_TEA_POT, 3);
             socket.send(reply, zmq::send_flags::none);
             continue;
         }
 
-        if(tokens[0] == "unlock") {
+        if(tokens[0] == UNLOCK_REQUEST) {
             zmq::message_t reply(3);
-            memcpy(reply.data(), "405", 3);
+            memcpy(reply.data(), METHOD_NOT_ALLOWED, 3);
             socket.send(reply, zmq::send_flags::none);
             continue;
         }
 
         lock();
         zmq::message_t reply(3);
-        memcpy(reply.data(), "200", 3);
+        memcpy(reply.data(), OK, 3);
         socket.send(reply, zmq::send_flags::none);
 
         while (true) {
@@ -106,27 +115,27 @@ void handle_shared_lock() {
             std::string unlock_request_str(static_cast<char *>(unlock_request.data()), unlock_request.size());
             std::vector<std::string> unlock_tokens = split_string(unlock_request_str, ':');
 
-            if(unlock_tokens[0] == "lock") {
+            if(unlock_tokens[0] == LOCK_REQUEST) {
                 zmq::message_t error_reply(3);
-                memcpy(error_reply.data(), "423", 3);
+                memcpy(error_reply.data(), LOCKED, 3);
                 socket.send(error_reply, zmq::send_flags::none);
                 continue;
-            } else if (unlock_tokens[0] != "unlock") {
+            } else if (unlock_tokens[0] != UNLOCK_REQUEST) {
                 zmq::message_t error_reply(3);
-                memcpy(error_reply.data(), "400", 3);
+                memcpy(error_reply.data(), METHOD_NOT_ALLOWED, 3);
                 socket.send(error_reply, zmq::send_flags::none);
                 continue;
             }
 
             if(unlock_tokens[1] != tokens[1]) {
                 zmq::message_t error_reply(3);
-                memcpy(error_reply.data(), "403", 3);
+                memcpy(error_reply.data(), FORBIDDEN, 3);
                 socket.send(error_reply, zmq::send_flags::none);
                 continue;
             }
 
             zmq::message_t error_reply(3);
-            memcpy(error_reply.data(), "200", 3);
+            memcpy(error_reply.data(), OK, 3);
             socket.send(error_reply, zmq::send_flags::none);
             break;
         }
