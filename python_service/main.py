@@ -20,12 +20,13 @@ function_mapper = {
 if __name__ == '__main__':
     while True:
         message = subscriber_socket.recv_string()
-        operation, service_name, id = message.split(":")
+        index, operation, service_name, id = message.split(":")
+        index = int(index)
 
         if operation != "request" or service_name != SERVICE_NAME:
             continue
 
-        index = shared_lock.get_lock()
+        shared_lock.get_lock()
         data = json.loads(read_from_shared_memory(shared_memory, index))
         if not validate_request_dict(data):
             shared_lock.unlock()
@@ -41,6 +42,5 @@ if __name__ == '__main__':
         data["operation"] = "response"
 
         shared_lock.get_lock()
-        print(data)
         write_to_shared_memory(shared_memory, json.dumps(data), index)
         shared_lock.unlock()

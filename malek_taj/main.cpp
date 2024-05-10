@@ -66,17 +66,18 @@ void handle_shared_requests() {
         std::string service_name = parsed_data["service_name"];
         std::string uuid = parsed_data["uuid"];
         std::string operation = parsed_data["operation"];
-        std::string message = operation + ":" + service_name + ":" + uuid;
-        if (request_set.contains(message)) {
+        std::stringstream message;
+        message << index << ":" << operation << ":" << service_name << ":" << uuid;
+        if (request_set.contains(message.str())) {
             unlock();
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
             std::cout << "Removing expired data in set" << std::endl;
             request_set.cleanupExpiredItems();
             continue;
         }
-        request_set.add(message, std::chrono::seconds(2));
+        request_set.add(message.str(), std::chrono::seconds(2));
 
-        publisher.send(zmq::buffer(message), zmq::send_flags::none);
+        publisher.send(zmq::buffer(message.str()), zmq::send_flags::none);
         unlock();
     }
 }
@@ -131,10 +132,11 @@ void handle_shared_lock() {
 
         zmq::message_t reply(5);
 
-        char indexString[20];
+        char indexString[2];
         char result[5];
         sprintf(indexString, "%d", index);
         strcpy(result, (const char *)OK);
+        strcat(result, ":");
         strcat(result, indexString);
         memcpy(reply.data(), result, 5);
         socket.send(reply, zmq::send_flags::none);
@@ -177,10 +179,10 @@ int main() {
     read_env();
     initialize_shared_object();
 
-//    std::thread shared_lock_thread(handle_shared_lock);
+    std::thread shared_lock_thread(handle_shared_lock);
     std::thread shared_request_thread(handle_shared_requests);
 
-//    shared_lock_thread.join();
+    shared_lock_thread.join();
     shared_request_thread.join();
 
     return 0;

@@ -43,7 +43,7 @@ class Function:
 
         while True:
             message = self.subscriber.recv_string()
-            operation, service_name, uid = message.split(":")
+            _, operation, service_name, uid = message.split(":")
 
             if operation == "response" and request_id == uid and service_name == self.service_name:
                 break
