@@ -48,8 +48,9 @@ class Function:
             if operation == "response" and self.id == id and service_name == self.service_name:
                 break
 
-        data = read_from_shared_memory(self.shard_memory)
-        print(json.loads(data))
+        data = json.loads(read_from_shared_memory(self.shard_memory))
+        write_to_shared_memory(self.shard_memory, "")
+        return data["response"]
 
 
 
