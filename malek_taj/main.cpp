@@ -55,12 +55,17 @@ void get_outer_requests() {
 
         int index = first_empty_spot(shm);
 
+        while(index == -1) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(20));
+            index = first_empty_spot(shm);
+        }
+
         write_to_shared_memory(shm, data_char, index);
         SHARED_MEMORY_LOCK.unlock();
     }
 }
 
-void send_outer_requests(std::string request_route, std::string request_message) {
+bool send_outer_requests(int index, std::string request_route, std::string request_message) {
     zmq::context_t context(1);
     zmq::socket_t socket(context, zmq::socket_type::req);
 
@@ -79,6 +84,8 @@ void send_outer_requests(std::string request_route, std::string request_message)
     std::string reply_message(static_cast<char*>(reply.data()), reply.size());
 
     std::cout << "send outer request to route " << request_route << " and got response " << reply_message << std::endl;
+
+    return reply_message == "200";
 }
 
 void handle_shared_requests() {
@@ -125,7 +132,9 @@ void handle_shared_requests() {
         std::stringstream message;
 
         if(ENV_MAP[service_name] != LOCAL) {
-            send_outer_requests(ENV_MAP[service_name], data);
+            if (send_outer_requests(index - 1, ENV_MAP[service_name], data)) {
+                write_to_shared_memory(shm, "", index - 1);
+            }
             continue;
         }
 
