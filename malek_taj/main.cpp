@@ -183,6 +183,7 @@ void handle_shared_lock() {
         SHARED_MEMORY_LOCK.lock();
         int index = first_empty_spot(shm);
         if (index == -1) {
+            SHARED_MEMORY_LOCK.unlock();
             zmq::message_t reply(3);
             memcpy(reply.data(), SERVICE_UNAVAILABLE, 3);
             socket.send(reply, zmq::send_flags::none);
@@ -218,6 +219,7 @@ void handle_shared_lock() {
                 continue;
             }
 
+            // here we check the requests token
             if(unlock_tokens[1] != tokens[1]) {
                 zmq::message_t error_reply(3);
                 memcpy(error_reply.data(), FORBIDDEN, 3);
