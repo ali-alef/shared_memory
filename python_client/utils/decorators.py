@@ -40,10 +40,12 @@ class Function:
             index
         )
         self.shared_lock.unlock()
+        print('writed in shared memory')
 
         while True:
             message = self.subscriber.recv_string()
             _, operation, service_name, uid = message.split(":")
+            print('waiting for answer')
 
             if operation == "response" and request_id == uid and service_name == self.service_name:
                 break

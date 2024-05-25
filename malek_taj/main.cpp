@@ -246,7 +246,7 @@ int main(int argc, char** argv) {
 
     shared_lock_thread.join();
     shared_request_thread.join();
-    outer_request_thread.join();
+//    outer_request_thread.join();
 
     return 0;
 }
