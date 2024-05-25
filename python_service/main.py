@@ -23,7 +23,6 @@ if __name__ == '__main__':
 
     while True:
         message = subscriber_socket.recv_string()
-        print(f'got message {message}')
         index, operation, service_name, id = message.split(":")
         index = int(index)
 
@@ -32,7 +31,6 @@ if __name__ == '__main__':
 
         shared_lock.get_lock()
         data = json.loads(read_from_shared_memory(shared_memory, index))
-        print(data)
         if not validate_request_dict(data):
             shared_lock.unlock()
             continue
@@ -42,7 +40,6 @@ if __name__ == '__main__':
 
         request_function = function_mapper.get(data.pop("function_name"), invalid_function)
         res = request_function(*data.pop("args", []))
-        print('resault -> ', res)
 
         data["result"] = res
         data["operation"] = "response"
