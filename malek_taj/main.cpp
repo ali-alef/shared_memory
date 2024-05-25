@@ -108,7 +108,6 @@ void handle_shared_requests() {
     while (true) {
         times_loop_ran++;
         if(times_loop_ran == 40) {
-            std::cout << "Removing expired data in set" << std::endl;
             request_set.cleanupExpiredItems();
             times_loop_ran = 0;
         }
@@ -116,10 +115,10 @@ void handle_shared_requests() {
         SHARED_MEMORY_LOCK.lock();
         std::string data = read_from_shared_memory(shm, index);
         index++;
+        index %= NUM_MESSAGES;
 
         if(data.empty()) {
             SHARED_MEMORY_LOCK.unlock();
-            index %= NUM_MESSAGES;
             std::this_thread::sleep_for(std::chrono::milliseconds(10));
             continue;
         }
@@ -138,7 +137,7 @@ void handle_shared_requests() {
             continue;
         }
 
-        message << index << ":" << operation << ":" << service_name << ":" << uuid;
+        message << index - 1 << ":" << operation << ":" << service_name << ":" << uuid;
         if (request_set.contains(message.str())) {
             SHARED_MEMORY_LOCK.unlock();
             std::this_thread::sleep_for(std::chrono::milliseconds(10));

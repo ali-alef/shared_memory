@@ -51,16 +51,29 @@ This project implements a multi-threaded, ZeroMQ-based messaging system with sha
 
 1. Set the required environment variables:
    ```sh
-   export ZMQ_OUTER_PORT=5555
-   export ZMQ_PUBLISHER_PORT=5556
-   export ZMQ_RESPONSE_PORT=5557
-   export ENV=development  # or other environment name
+   export ENV=local  # or other environment name (default is local)
    ```
 
 2. Run the application:
-   ```sh
-   ./your_executable_name
-   ```
+   * compile shared_memory.c file by running:
+       ```sh 
+       gcc -shared -fPIC -o ./shared/shared_memory.so ./shared/shared_memory.c
+       ```
+   * clear the shared memory by running `clear_shared_memory.py` file.
+   * Compile the `malek_taj` main.cpp by running:
+     ```sh
+     g++ main.cpp timed_set.cpp utils.cpp settings.cpp -o main -lzmq
+     ```
+   * Run the compiled `malek_taj` file:
+     ```sh
+     ./main
+     ```
+   * Run the Python service main file `main.py` that is in the `python_service` directory.
+   * Run the Python client main file `main.py` that is in the `python_client` directory.
+   * **Note:** You should run each file from its base directory. For example, to run the compiled `main` file of `malek_taj`, you should be in the `malek_taj` directory.
+
+   **Warning: Ensure you are in the correct base directory before running each file.**
+ 
 
 ## Detailed Description
 
