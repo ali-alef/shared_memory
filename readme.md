@@ -129,7 +129,3 @@ Contributions are welcome! Please submit a pull request or open an issue to disc
 ## License
 
 This project is licensed under the MIT License.
-
----
-
-Please send any additional files or further details if needed, and I'll continue to update the README accordingly.
