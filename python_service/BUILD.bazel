@@ -1,0 +1,20 @@
+py_binary(
+    name = "python_service_main",
+    srcs = [
+        "main.py",
+        "settings.py",
+        "utils/decorators.py",
+        "utils/__init__.py",
+        "utils/lock.py",
+        "utils/shared_memory.py",
+        "utils/zmq.py",
+    ],
+    main = "main.py",
+    data = [
+        "config/docker.env",
+        "config/local.env",
+    ],
+    deps = [
+        "//shared:shared_memory_lib",
+    ],
+)

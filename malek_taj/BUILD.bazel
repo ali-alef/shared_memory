@@ -1,0 +1,21 @@
+cc_library(
+    name = "malek_taj_lib",
+    srcs = [
+        "settings.cpp",
+        "timed_set.cpp",
+        "utils.cpp",
+    ],
+    hdrs = [
+        "json.hpp",
+        "timed_set.f",
+        "settings.f",
+        "utils.f",
+    ],
+)
+
+cc_binary(
+    name = "malek_taj_main",
+    srcs = ["main.cpp"],
+    deps = [":malek_taj_lib"],
+    linkopts = ["-lzmq"],
+)

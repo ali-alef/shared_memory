@@ -1,0 +1,6 @@
+cc_library(
+    name = "shared_memory_lib",
+    srcs = ["shared_memory.c"],
+    hdrs = ["shared_memory.h"],
+    visibility = ["//visibility:public"],
+)
